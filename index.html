@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Planner Agent</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #222;
+      min-height: 100vh;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1d3557;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .card,
+    .output-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cfd8e3;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #457b9d;
+      box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.2);
+    }
+
+    small {
+      color: #666;
+      display: block;
+      margin-top: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background: #1d3557;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #457b9d;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      color: #1d3557;
+    }
+
+    #output {
+      line-height: 1.8;
+      color: #333;
+    }
+
+    .plan-day {
+      background: #f8fbff;
+      border-left: 4px solid #457b9d;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+
+    .error {
+      color: #c1121f;
+      font-weight: bold;
+    }
+
+    .success {
+      color: #2a9d8f;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    hr {
+      margin: 15px 0;
+      border: none;
+      border-top: 1px solid #ddd;
+    }
+
+    @media (max-width: 600px) {
+      .card,
+      .output-card {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      button {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Study Planner Agent</h1>
+    <p class="subtitle">Plan your exam preparation in a simple way</p>
+
+    <div class="card">
+      <form id="studyForm">
+        <div class="form-group">
+          <label for="studentName">Student Name</label>
+          <input type="text" id="studentName" placeholder="Enter your name" />
+        </div>
+
+        <div class="form-group">
+          <label for="subjects">Subjects</label>
+          <input
+            type="text"
+            id="subjects"
+            placeholder="Example: Java, Physics, Maths"
+          />
+          <small>Enter subjects separated by commas</small>
+        </div>
+
+        <div class="form-group">
+          <label for="examDate">Exam Date</label>
+          <input type="date" id="examDate" />
+        </div>
+
+        <div class="form-group">
+          <label for="hoursPerDay">Hours Available Per Day</label>
+          <input
+            type="number"
+            id="hoursPerDay"
+            placeholder="Example: 4"
+            min="1"
+            max="24"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="weakSubject">Weak Subject</label>
+          <input
+            type="text"
+            id="weakSubject"
+            placeholder="Example: Maths"
+          />
+        </div>
+
+        <button type="submit">Generate Study Plan</button>
+      </form>
+    </div>
+
+    <div class="output-card">
+      <h2>Your Study Plan</h2>
+      <div id="output">
+        <p>Your generated plan will appear here.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const studyForm = document.getElementById("studyForm");
+    const output = document.getElementById("output");
+
+    studyForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const studentName = document.getElementById("studentName").value.trim();
+      const subjectsInput = document.getElementById("subjects").value.trim();
+      const examDate = document.getElementById("examDate").value;
+      const hoursPerDay = document.getElementById("hoursPerDay").value;
+      const weakSubject = document.getElementById("weakSubject").value.trim();
+
+      if (!studentName || !subjectsInput || !examDate || !hoursPerDay || !weakSubject) {
+        output.innerHTML = `<p class="error">Please fill in all fields.</p>`;
+        return;
+      }
+
+      const subjects = subjectsInput
+        .split(",")
+        .map(subject => subject.trim())
+        .filter(subject => subject !== "");
+
+      if (subjects.length === 0) {
+        output.innerHTML = `<p class="error">Please enter at least one subject.</p>`;
+        return;
+      }
+
+      const today = new Date();
+      const exam = new Date(examDate);
+
+      today.setHours(0, 0, 0, 0);
+      exam.setHours(0, 0, 0, 0);
+
+      const timeDiff = exam.getTime() - today.getTime();
+      const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+      if (daysLeft <= 0) {
+        output.innerHTML = `<p class="error">Please select a future exam date.</p>`;
+        return;
+      }
+
+      const revisionDays = daysLeft >= 3 ? 2 : 1;
+      const studyDays = daysLeft - revisionDays;
+
+      let matchedWeakSubject = subjects.find(
+        subject => subject.toLowerCase() === weakSubject.toLowerCase()
+      );
+
+      if (!matchedWeakSubject) {
+        matchedWeakSubject = subjects[0];
+      }
+
+      let planHTML = `
+        <p class="success">Hello ${studentName}, your study plan is ready.</p>
+        <p><strong>Days left:</strong> ${daysLeft}</p>
+        <p><strong>Subjects:</strong> ${subjects.join(", ")}</p>
+        <p><strong>Weak subject:</strong> ${matchedWeakSubject}</p>
+        <p><strong>Daily study hours:</strong> ${hoursPerDay} hours</p>
+        <hr>
+      `;
+
+      for (let day = 1; day <= studyDays; day++) {
+        let mainSubject = subjects[(day - 1) % subjects.length];
+
+        let mainHours = Math.max(1, Math.floor(hoursPerDay / 2));
+        let weakHours = Math.max(1, Math.ceil(hoursPerDay / 2));
+
+        planHTML += `
+          <div class="plan-day">
+            <strong>Day ${day}</strong><br>
+            Study ${mainSubject} for ${mainHours} hours.<br>
+            Revise ${matchedWeakSubject} for ${weakHours} hours.
+          </div>
+        `;
+      }
+
+      for (let day = studyDays + 1; day <= daysLeft; day++) {
+        planHTML += `
+          <div class="plan-day">
+            <strong>Day ${day}</strong><br>
+            Full revision day.<br>
+            Focus on weak areas, short notes, and mock questions.
+          </div>
+        `;
+      }
+
+      output.innerHTML = planHTML;
+    });
+  </script>
+</body>
+</html>
